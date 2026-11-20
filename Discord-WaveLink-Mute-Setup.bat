@@ -429,7 +429,7 @@ public class AudioSessionTools
 
 $TaskName  = 'Discord-WaveLink-AutoMute'
 $LnkPath   = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup\Discord WaveLink Mute.lnk'
-$InnerArgs = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"'
+$InnerArgs = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}" -Language {1}'
 $VbsPath   = Join-Path $PSScriptRoot 'Start-DiscordMuteWatchdog.vbs'
 $pattern   = '^(Discord|DiscordCanary|DiscordPTB)$'
 
@@ -497,7 +497,7 @@ if ($Install) {
     # VBS wrapper: starts PowerShell via WScript.Shell.Run with window style 0,
     # i.e. the console window is created hidden from the start (no flash at
     # Windows logon, no taskbar entry).
-    $inner = ($InnerArgs -f $PSCommandPath) -replace '"', '""'
+    $inner = ($InnerArgs -f $PSCommandPath, $Language) -replace '"', '""'
     $vbsLines = @(
         "' Starts the Discord-WaveLink mute watchdog completely invisible.",
         ('CreateObject("WScript.Shell").Run "' + $inner + '", 0, False'),
