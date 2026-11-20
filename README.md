@@ -49,6 +49,9 @@ The installed engine lives at `%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord
 | `... -List` | Show devices + running audio sessions |
 | `... -Install` | Set up autostart (the installer does this automatically) |
 | `... -Remove` | Remove autostart and watchdog (uninstall) |
+| `... -Language en` / `... -Language de` | Force the output language (default: automatic) |
+
+The output language is automatic: German on German Windows, English otherwise. Use `-Language en` or `-Language de` to force one.
 
 Example:
 
@@ -139,6 +142,9 @@ Die installierte Engine liegt unter `%LOCALAPPDATA%\DiscordMuteAutomation\Mute-D
 | `... -List` | Geräte + laufende Audio-Sitzungen anzeigen |
 | `... -Install` | Autostart einrichten (macht der Installer automatisch) |
 | `... -Remove` | Autostart und Watchdog entfernen (Deinstallation) |
+| `... -Language en` / `... -Language de` | Sprache der Ausgaben erzwingen (Standard: automatisch) |
+
+Die Sprache der Ausgaben ist automatisch: Deutsch auf deutschem Windows, sonst Englisch. Mit `-Language en` oder `-Language de` lässt sich eine Sprache erzwingen.
 
 Beispiel:
 

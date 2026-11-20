@@ -29,6 +29,9 @@ Commands (optional)
     powershell -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1" -Mute
   Show status:
     powershell -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1" -List
+  Force English output (default: automatic):
+    powershell -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1" -Language en
+  (On German Windows the engine reports in German, otherwise in English.)
 
 Requirements
   Windows 10/11, Elgato Wave Link installed, Discord.
@@ -76,6 +79,9 @@ Befehle (optional)
     powershell -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1" -Mute
   Status anzeigen:
     powershell -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1" -List
+  Deutsch erzwingen (Standard: automatisch):
+    powershell -ExecutionPolicy Bypass -File "%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1" -Language de
+  (Auf deutschem Windows meldet die Engine auf Deutsch, sonst auf Englisch.)
 
 Voraussetzungen
   Windows 10/11, Elgato Wave Link installiert, Discord.
