@@ -2,7 +2,7 @@
 
 Automatically mutes Discord's audio session on Elgato Wave Link devices on Windows — permanently in the background. Prevents doubled voice audio when screen sharing with sound.
 
-**English** · **Deutsch**
+[English](#english) · [Deutsch](#deutsch)
 
 ## English
 

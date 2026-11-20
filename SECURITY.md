@@ -1,5 +1,7 @@
 # Security Policy
 
+[English](#english) · [Deutsch](#deutsch)
+
 ## English
 
 ### Supported versions
