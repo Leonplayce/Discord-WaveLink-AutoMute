@@ -91,6 +91,10 @@ make-release.ps1                   Builds the distribution ZIP
 - No mute after logon → check the log for „Watchdog started"; re-run `-Install` if needed.
 - Installer exit codes: `3` = no Wave Link devices, `4` = autostart could not be configured.
 
+### Security
+
+Please report vulnerabilities privately – see [SECURITY.md](SECURITY.md). Do not open a public issue for security problems.
+
 ### License
 
 MIT – see [LICENSE](LICENSE). Unofficial project, not affiliated with Elgato or Discord. Use at your own risk.
@@ -183,6 +187,10 @@ make-release.ps1                   Erstellt das Weitergabe-ZIP
 - „No devices matching 'Elgato Virtual Audio' found" → Wave Link ist nicht installiert oder die virtuellen Geräte sind deaktiviert.
 - Kein Mute nach dem Start → im Protokoll prüfen, ob „Watchdog started" steht; ggf. `-Install` erneut ausführen.
 - Exit-Codes des Installers: `3` = keine Wave-Link-Geräte, `4` = Autostart konnte nicht eingerichtet werden.
+
+### Sicherheit
+
+Sicherheitslücken bitte vertraulich melden – siehe [SECURITY.md](SECURITY.md). Für Sicherheitsprobleme kein öffentliches Issue erstellen.
 
 ### Lizenz
 
