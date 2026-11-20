@@ -28,7 +28,7 @@ Nach dem nächsten PC-Start ist wieder alles stumm – genau wie gewünscht.
 
 ## Installation
 
-1. [Release](../../releases) herunterladen (`Discord-WaveLink-Mute.zip`) und entpacken.
+1. [Release](https://github.com/Leonplayce/Discord-WaveLink-AutoMute/releases) herunterladen (`Discord-WaveLink-Mute.zip`) und entpacken.
 2. Doppelklick auf `Discord-WaveLink-Mute-Setup.bat`.
 3. Fertig. Der Installer prüft, ob Wave Link installiert ist, richtet den Autostart ein und setzt den ersten Mute.
 
