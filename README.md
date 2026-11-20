@@ -1,6 +1,6 @@
 # Discord WaveLink AutoMute
 
-Automatically mutes Discord's audio session on Elgato Wave Link devices on Windows — permanently in the background. Prevents doubled voice audio when screen sharing with sound.
+Automatically mutes Discord's audio session on Elgato Wave Link devices on Windows — permanently in the background. Fixes doubled audio and echo when screen sharing with sound, so other people no longer hear themselves or your voice twice.
 
 [English](#english) · [Deutsch](#deutsch)
 
@@ -84,6 +84,32 @@ make-release.ps1                   Builds the distribution ZIP
 2. Run `powershell -ExecutionPolicy Bypass -File .\build-installer.ps1` – re-embeds the engine into the `.bat` and verifies the result.
 3. Test: `powershell -ExecutionPolicy Bypass -File .\Mute-Discord-WaveLink.ps1 -List`
 
+### Common questions
+
+**Why do other people hear themselves or my voice twice (echo) when I share my screen?**
+Discord captures the entire desktop audio output when you share a screen with sound. On Wave Link setups that capture includes the Discord voice chat, so the call audio is sent through the stream a second time. This tool mutes Discord's playback session on the Wave Link devices, so the stream no longer contains the call – while you still hear everyone normally.
+
+**Does it mute my microphone?**
+No. Only Discord's playback audio session on the Wave Link devices is muted. Your microphone and Discord's voice input stay untouched.
+
+**Do I need administrator rights?**
+No. Everything runs in the user session. Autostart uses a scheduled task in the user context; if that fails, a startup-folder shortcut is created.
+
+**Does it work with Discord Stable, PTB and Canary?**
+Yes – `Discord`, `DiscordPTB` and `DiscordCanary` are all detected.
+
+**Does it work with Wave Link 3.0?**
+Yes. It uses the `Elgato Virtual Audio` devices and works with Wave Link 2.x and 3.x on Windows 10 and 11.
+
+**Will Discord be muted again after a reboot?**
+Yes. The watchdog starts automatically at logon and mutes new Discord sessions within a few seconds. A manual unmute is respected and not overridden.
+
+**Which Windows versions are supported?**
+Windows 10 and Windows 11.
+
+**Why not simply mute the stream output in Wave Link?**
+That also affects other apps and the stream mix. This tool targets only Discord's Windows audio session, so other audio keeps working and the setting survives reboots.
+
 ### Troubleshooting
 
 - Log file: `%LOCALAPPDATA%\DiscordMuteAutomation\log.txt`
@@ -102,6 +128,8 @@ MIT – see [LICENSE](LICENSE). Unofficial project, not affiliated with Elgato o
 ---
 
 ## Deutsch
+
+Schaltet Discord auf Elgato-Wave-Link-Geräten unter Windows automatisch stumm – dauerhaft im Hintergrund. Verhindert doppeltes Audio und Echo beim Teilen des Bildschirms mit Ton, sodass andere sich nicht mehr selbst oder dich doppelt hören.
 
 ### Das Problem
 
@@ -180,6 +208,32 @@ make-release.ps1                   Erstellt das Weitergabe-ZIP
 1. Engine in `Mute-Discord-WaveLink.ps1` anpassen.
 2. `powershell -ExecutionPolicy Bypass -File .\build-installer.ps1` ausführen – bettet die Engine neu in die `.bat` ein und prüft das Ergebnis.
 3. Testen: `powershell -ExecutionPolicy Bypass -File .\Mute-Discord-WaveLink.ps1 -List`
+
+### Häufige Fragen
+
+**Warum hören andere mich oder sich selbst doppelt bzw. mit Echo, wenn ich den Bildschirm teile?**
+Discord nimmt beim Teilen mit Ton die gesamte Desktop-Audioausgabe auf. Bei Wave Link enthält diese Aufnahme auch die Discord-Sprachausgabe – die Stimmen landen also ein zweites Mal im Stream. Dieses Tool schaltet die Discord-Wiedergabe auf den Wave-Link-Geräten stumm, sodass der Stream den Call nicht mehr enthält, während du alle weiterhin normal hörst.
+
+**Wird mein Mikrofon stummgeschaltet?**
+Nein. Es wird nur die Wiedergabe-Audiositzung von Discord auf den Wave-Link-Geräten stummgeschaltet. Mikrofon und Spracheingabe bleiben unberührt.
+
+**Brauche ich Administratorrechte?**
+Nein. Alles läuft in der Benutzersitzung. Der Autostart nutzt eine geplante Aufgabe im Benutzerkontext; falls das scheitert, wird eine Verknüpfung im Autostartordner angelegt.
+
+**Funktioniert es mit Discord Stable, PTB und Canary?**
+Ja – `Discord`, `DiscordPTB` und `DiscordCanary` werden alle erkannt.
+
+**Funktioniert es mit Wave Link 3.0?**
+Ja. Es nutzt die Geräte mit `Elgato Virtual Audio` und funktioniert mit Wave Link 2.x und 3.x unter Windows 10 und 11.
+
+**Ist Discord nach einem Neustart wieder stumm?**
+Ja. Der Watchdog startet automatisch bei der Anmeldung und schaltet neue Discord-Sitzungen innerhalb weniger Sekunden stumm. Ein manuelles Unmute wird respektiert und nicht überschrieben.
+
+**Welche Windows-Versionen werden unterstützt?**
+Windows 10 und Windows 11.
+
+**Warum nicht einfach den Stream-Ausgang in Wave Link stummschalten?**
+Das betrifft auch andere Apps und den Stream-Mix. Dieses Tool zielt nur auf die Windows-Audiositzung von Discord – andere Audioquellen bleiben unverändert, und die Einstellung überlebt Neustarts.
 
 ### Fehlersuche
 
