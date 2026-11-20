@@ -1,9 +1,10 @@
 @echo off
-title Discord Wave Link Auto-Mute - Einrichtung
+title Discord Wave Link Auto-Mute - Setup / Einrichtung
 setlocal
 ver | find "10." >nul
 if errorlevel 1 (
   echo.
+  echo   This package requires Windows 10 or Windows 11.
   echo   Dieses Paket benoetigt Windows 10 oder Windows 11.
   echo.
   pause
@@ -13,48 +14,52 @@ echo.
 echo   Discord Wave Link Auto-Mute
 echo   ===========================
 echo.
-echo   [1/3] Skript wird entpackt ...
+echo   [1/3] Extracting script ... / Skript wird entpackt ...
 set "SRC=%~f0"
 set "ENGINE=%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1"
 if not exist "%LOCALAPPDATA%\DiscordMuteAutomation" mkdir "%LOCALAPPDATA%\DiscordMuteAutomation" >nul 2>&1
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$b='#ENG'+'BEGIN#'; $e='#ENG'+'END#'; $c=[IO.File]::ReadAllText($env:SRC); $i=$c.IndexOf($b); $j=$c.IndexOf($e, $i); if($i -lt 0 -or $j -le $i){ exit 2 }; [IO.File]::WriteAllText($env:ENGINE, $c.Substring($i+$b.Length, $j-$i-$b.Length), (New-Object System.Text.UTF8Encoding $true))"
 if errorlevel 1 (
-  echo   [FEHLER] Entpacken fehlgeschlagen.
+  echo   [ERROR] Extraction failed. / [FEHLER] Entpacken fehlgeschlagen.
   echo.
   pause
   exit /b 1
 )
-echo   [2/3] Wave Link wird geprueft, Autostart eingerichtet, erster Lauf ...
+echo   [2/3] Checking Wave Link, setting up autostart, first run ...
+echo         Wave Link wird geprueft, Autostart eingerichtet, erster Lauf ...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ENGINE%" -Install
 set "RC=%ERRORLEVEL%"
 if "%RC%"=="1" (
   echo.
-  echo   Hinweis: Discord lief beim Installieren noch nicht, es wurde deshalb
-  echo   noch nichts stummgeschaltet. Kein Problem: Der Autostart ist
-  echo   eingerichtet und greift beim naechsten Windows-Start automatisch.
+  echo   Note: Discord was not running during setup, nothing was muted yet.
+  echo   No problem: autostart is configured and takes over at next logon.
+  echo   Hinweis: Discord lief beim Installieren noch nicht, es wurde noch
+  echo   nichts stummgeschaltet. Der Autostart greift beim naechsten Start.
   echo.
 ) else if not "%RC%"=="0" (
   echo.
+  echo   [ERROR] Installation failed ^([code %RC%]^).
   echo   [FEHLER] Installation fehlgeschlagen ^([Code %RC%]^).
+  echo   Possible cause: Elgato Wave Link is not installed.
   echo   Moegliche Ursache: Elgato Wave Link ist nicht installiert.
-  echo   Einzelheiten stehen in der Protokolldatei:
+  echo   Details / Einzelheiten:
   echo   %LOCALAPPDATA%\DiscordMuteAutomation\log.txt
   echo.
   pause
   exit /b 1
 )
-echo   [3/3] Fertig!
+echo   [3/3] Done! / Fertig!
 echo.
-echo   Ab jetzt gilt:
-echo   - Beim Windows-Start wird Discord auf den Wave-Link-Geraeten
-echo     automatisch stummgeschaltet.
-echo   - Ein Hintergrund-Watchdog bleibt aktiv und stummschaltet auch
-echo     Audiospuren, die spaeter erst entstehen (z. B. beim Streamen).
-echo   - Wenn du Discord von Hand freischaltest (Mixer oder Befehl),
-echo     laesst der Watchdog das zu.
+echo   From now on / Ab jetzt gilt:
+echo   - Discord is muted automatically on the Wave Link devices at logon.
+echo     Beim Windows-Start wird Discord auf den Wave-Link-Geraeten stumm.
+echo   - The background watchdog also mutes sessions that appear later.
+echo     Der Hintergrund-Watchdog erfasst auch spaeter entstehende Spuren.
+echo   - Manual unmute (mixer or command) is respected.
+echo     Manuelles Freischalten (Mixer oder Befehl) wird respektiert.
 echo.
-echo   Protokoll:     %LOCALAPPDATA%\DiscordMuteAutomation\log.txt
-echo   Deinstallieren (Befehl ausfuehren):
+echo   Log / Protokoll: %LOCALAPPDATA%\DiscordMuteAutomation\log.txt
+echo   Uninstall / Deinstallieren:
 echo     powershell -ExecutionPolicy Bypass -File "%ENGINE%" -Remove
 echo.
 pause
@@ -69,30 +74,30 @@ param(
     [switch]$Remove,
     [string]$DeviceFilter = 'Elgato Virtual Audio',
     [int]$PollIntervalSeconds = 5,
-    [int]$TimeoutSeconds = 0   # veraltet, wird ignoriert (nur fuer Kompatibilitaet alter Aufrufe)
+    [int]$TimeoutSeconds = 0   # deprecated and ignored (kept for compatibility with old shortcuts)
 )
 
 # =====================================================================
 # Mute-Discord-WaveLink.ps1
 #
-# Haelt die Audio-Sitzungen von Discord auf den virtuellen Elgato Wave
-# Link Geraeten stummgeschaltet, damit die Stimmen beim Bildschirmteilen
-# mit Ton nicht doppelt ankommen.
+# Keeps Discord's audio sessions muted on the virtual Elgato Wave Link
+# devices so that call voices are not heard twice when screen sharing
+# with sound (Discord captures the default output device, which on Wave
+# Link setups often carries the call voices too).
 #
-# Modi:
-#   (ohne Parameter)   Watchdog: laeuft DAUERHAFT und voellig unsichtbar
-#                      im Hintergrund und stummschaltet jede
-#                      Discord-Audiospur auf den Wave-Link-Geraeten -
-#                      auch Spuren, die erst spaeter entstehen
-#                      (z. B. wenn Apps mit Ton gestartet werden).
-#                      Spuren, die von Hand freigeschaltet wurden
-#                      (Mixer oder -Unmute), werden respektiert.
-#   -Mute              einmalig: alles was jetzt vorhanden ist stummschalten
-#   -Unmute            einmalig: alles freischalten (Watchdog respektiert das)
-#   -List              anzeigen, was auf den Geraeten laeuft
-#   -Install           Autostart (geplante Aufgabe) einrichten + erster Lauf
-#   -Remove            Autostart + laufenden Watchdog entfernen
-#   -DeviceFilter ''   alle Geraete anzeigen (Diagnose)
+# Modes:
+#   (no parameters)    Watchdog: runs PERMANENTLY and fully invisible in
+#                      the background and mutes every Discord audio
+#                      session on the Wave Link devices - including
+#                      sessions that appear later (e.g. when apps with
+#                      sound are opened). Sessions unmuted by hand
+#                      (mixer or -Unmute) are respected.
+#   -Mute              one-shot: mute everything currently present
+#   -Unmute            one-shot: unmute everything (the watchdog honors it)
+#   -List              show what is running on the devices
+#   -Install           set up invisible autostart (scheduled task) + first run
+#   -Remove            remove autostart + running watchdog
+#   -DeviceFilter ''   list all devices (diagnostics)
 # =====================================================================
 
 $ErrorActionPreference = 'Stop'
@@ -243,7 +248,7 @@ public class AudioSessionTools
                 return Marshal.PtrToStringUni(v.pointerValue);
         }
         catch {}
-        return "(unbekannt)";
+        return "(unknown)";
     }
 
     static List<SessionInfo> SessionsOnDevice(IMMDevice dev, string deviceName)
@@ -253,7 +258,7 @@ public class AudioSessionTools
         Guid iid = IID_IAudioSessionManager2;
         int hr = dev.Activate(ref iid, CLSCTX_ALL, IntPtr.Zero, out pMgr);
         if (hr != 0)
-            throw new COMException("Activate fehlgeschlagen fuer Geraet: " + deviceName, hr);
+            throw new COMException("Activate failed for device: " + deviceName, hr);
 
         var mgr = (IAudioSessionManager2)Marshal.GetObjectForIUnknown(pMgr);
         Marshal.Release(pMgr);
@@ -276,7 +281,7 @@ public class AudioSessionTools
             try { string inst; ctl.GetSessionInstanceIdentifier(out inst); info.Instance = inst ?? ""; } catch {}
 
             try { info.ProcessName = Process.GetProcessById(pid).ProcessName; }
-            catch { info.ProcessName = "(beendet)"; }
+            catch { info.ProcessName = "(terminated)"; }
 
             try
             {
@@ -290,7 +295,7 @@ public class AudioSessionTools
             }
             catch
             {
-                info.ProcessName += " (kein Volume-Zugriff)";
+                info.ProcessName += " (no volume access)";
             }
 
             list.Add(info);
@@ -364,7 +369,7 @@ public class AudioSessionTools
             {
                 if (s.ProcessId != processId)
                     continue;
-                if (s.ProcessName.Contains("kein Volume-Zugriff"))
+                if (s.ProcessName.Contains("no volume access"))
                     continue;
 
                 IntPtr pMgr;
@@ -415,10 +420,10 @@ function Get-DiscordSessions {
 }
 
 if ($List) {
-    Write-Host ("Aktive Ausgabegeraete im Filter '{0}':" -f $DeviceFilter)
-    [AudioSessionTools]::ListDevices($DeviceFilter) | ForEach-Object { Write-Host ("  Geraet: " + $_) }
+    Write-Host ("Active output devices matching '{0}':" -f $DeviceFilter)
+    [AudioSessionTools]::ListDevices($DeviceFilter) | ForEach-Object { Write-Host ("  Device: " + $_) }
     Write-Host ""
-    Write-Host "Audio-Sitzungen auf diesen Geraeten:"
+    Write-Host "Audio sessions on these devices:"
     [AudioSessionTools]::GetSessions($DeviceFilter) |
         Sort-Object Device, ProcessName |
         Format-Table Device, ProcessId, ProcessName, Muted, Volume -AutoSize |
@@ -431,26 +436,26 @@ if ($Remove) {
     $doneList = New-Object System.Collections.Generic.List[string]
     try {
         Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction Stop
-        $doneList.Add('Geplante Aufgabe entfernt')
+        $doneList.Add('Removed scheduled task')
     } catch {}
     if (Test-Path $LnkPath) {
         Remove-Item $LnkPath -Force -ErrorAction SilentlyContinue
-        $doneList.Add('Autostart-Verknuepfung entfernt')
+        $doneList.Add('Removed startup shortcut')
     }
     Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
         Where-Object { $_.CommandLine -like '*Mute-Discord-WaveLink.ps1*' -and $_.ProcessId -ne $PID } |
         ForEach-Object {
             try {
                 Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop
-                $doneList.Add('Watchdog-Prozess beendet (PID ' + $_.ProcessId + ')')
+                $doneList.Add('Stopped watchdog process (PID ' + $_.ProcessId + ')')
             } catch {}
         }
     if ($doneList.Count -eq 0) {
-        Write-Log 'Deinstallation: nichts gefunden (war nichts installiert).'
+        Write-Log 'Uninstall: nothing found (nothing was installed).'
     } else {
-        foreach ($d in $doneList) { Write-Log ('Deinstallation: ' + $d) }
+        foreach ($d in $doneList) { Write-Log ('Uninstall: ' + $d) }
     }
-    Write-Log ('Die Skriptdatei selbst bleibt erhalten: ' + $PSCommandPath)
+    Write-Log ('The script file itself is kept: ' + $PSCommandPath)
     exit 0
 }
 
@@ -459,17 +464,17 @@ if ($Install) {
 
     $devices = @([AudioSessionTools]::ListDevices($DeviceFilter))
     if ($devices.Count -eq 0) {
-        Write-Log ("KEINE '{0}'-Geraete gefunden. Ist Elgato Wave Link installiert?" -f $DeviceFilter)
+        Write-Log ("No devices matching '{0}' found. Is Elgato Wave Link installed?" -f $DeviceFilter)
         exit 3
     }
-    foreach ($d in $devices) { Write-Log ('Wave-Link-Geraet gefunden: ' + $d) }
+    foreach ($d in $devices) { Write-Log ('Wave Link device found: ' + $d) }
 
-    # VBS-Wrapper: startet PowerShell ueber WScript.Shell.Run mit Fensterstil 0,
-    # d. h. das Konsolenfenster wird von Anfang an erzeugt und ist nie sichtbar
-    # (kein Aufblitzen beim Windows-Start, kein Taskbar-Eintrag).
+    # VBS wrapper: starts PowerShell via WScript.Shell.Run with window style 0,
+    # i.e. the console window is created hidden from the start (no flash at
+    # Windows logon, no taskbar entry).
     $inner = ($InnerArgs -f $PSCommandPath) -replace '"', '""'
     $vbsLines = @(
-        "' Startet den Discord-WaveLink-Mute-Watchdog voellig unsichtbar.",
+        "' Starts the Discord-WaveLink mute watchdog completely invisible.",
         ('CreateObject("WScript.Shell").Run "' + $inner + '", 0, False'),
         ''
     )
@@ -483,7 +488,7 @@ if ($Install) {
         $settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit (New-TimeSpan -Seconds 0)
         Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force -ErrorAction Stop | Out-Null
         try { Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop } catch {}
-        $method = 'Geplante Aufgabe (Watchdog, fensterlos, ohne Zeitlimit)'
+        $method = 'Scheduled task (watchdog, windowless, no time limit)'
     } catch {
         try {
             $ws  = New-Object -ComObject WScript.Shell
@@ -491,29 +496,29 @@ if ($Install) {
             $lnk.TargetPath = Join-Path $env:SystemRoot 'System32\wscript.exe'
             $lnk.Arguments  = ('"' + $VbsPath + '"')
             $lnk.Save()
-            $method = 'Autostart-Verknuepfung (Ordner, fensterlos)'
+            $method = 'Startup folder shortcut (windowless)'
         } catch {
-            Write-Log ('Installation fehlgeschlagen: ' + $_.Exception.Message)
+            Write-Log ('Installation failed: ' + $_.Exception.Message)
             exit 4
         }
     }
-    Write-Log ('Autostart eingerichtet: ' + $method)
+    Write-Log ('Autostart configured: ' + $method)
 }
 
-# ---------------- Einmaliger Durchlauf (-Mute / -Unmute / -Install) ----------------
+# ---------------- One-shot pass (-Mute / -Unmute / -Install) ----------------
 
 if ($Mute -or $Unmute -or $Install) {
     $wantMute = -not [bool]$Unmute
-    $stateText = if ($wantMute) { 'STUMM' } else { 'AKTIV' }
+    $stateText = if ($wantMute) { 'MUTED' } else { 'UNMUTED' }
 
     $sessions = @()
     try { $sessions = @(Get-DiscordSessions) } catch {
-        Write-Log ('Fehler beim Abfragen der Audio-Sitzungen: ' + $_.Exception.Message)
+        Write-Log ('Error while querying audio sessions: ' + $_.Exception.Message)
         exit 1
     }
 
     if ($sessions.Count -eq 0) {
-        Write-Log ("Keine Discord-Audiositzung auf '{0}' gefunden - nichts zu tun." -f $DeviceFilter)
+        Write-Log ("No Discord audio session on '{0}' found - nothing to do." -f $DeviceFilter)
         if ($wantMute) { exit 1 } else { exit 0 }
     }
 
@@ -521,36 +526,36 @@ if ($Mute -or $Unmute -or $Install) {
         try {
             $ok = [AudioSessionTools]::SetMute($DeviceFilter, $s.ProcessId, $wantMute)
             if ($ok) {
-                Write-Log ("{0} (PID {1}, Geraet '{2}') -> {3}" -f $s.ProcessName, $s.ProcessId, $s.Device, $stateText)
+                Write-Log ("{0} (PID {1}, device '{2}') -> {3}" -f $s.ProcessName, $s.ProcessId, $s.Device, $stateText)
             }
             else {
-                Write-Log ("WARNUNG: Zustand konnte fuer {0} (PID {1}, Geraet '{2}') nicht gesetzt werden." -f $s.ProcessName, $s.ProcessId, $s.Device)
+                Write-Log ("WARNING: Could not set state for {0} (PID {1}, device '{2}')." -f $s.ProcessName, $s.ProcessId, $s.Device)
             }
         }
         catch {
-            Write-Log ("WARNUNG: Vorgang fehlgeschlagen fuer {0} (PID {1}, Geraet '{2}'): {3}" -f $s.ProcessName, $s.ProcessId, $s.Device, $_.Exception.Message)
+            Write-Log ("WARNING: Operation failed for {0} (PID {1}, device '{2}'): {3}" -f $s.ProcessName, $s.ProcessId, $s.Device, $_.Exception.Message)
         }
     }
     exit 0
 }
 
-# ---------------- Watchdog (Standardmodus, laeuft dauerhaft) ----------------
+# ---------------- Watchdog (default mode, runs permanently) ----------------
 
 $script:WatchdogMutex = New-Object System.Threading.Mutex($false, 'Local\DiscordWaveLinkAutoMuteWatchdog')
 $created = $false
 try { $created = $script:WatchdogMutex.WaitOne(0) } catch [System.Threading.AbandonedMutexException] { $created = $true }
 if (-not $created) {
-    Write-Log 'Watchdog laeuft in dieser Anmeldung bereits - zweiter Start wird beendet.'
+    Write-Log 'A watchdog is already running in this logon session - exiting second instance.'
     exit 0
 }
 
-$MutedByUs    = @{}   # Instanz wurde von uns stummgeschaltet
-$LeftAlone    = @{}   # Instanz wurde spaeter von Hand freigeschaltet -> nicht mehr anfassen
-$Warned       = @{}   # Warnung pro Instanz nur einmal loggen
+$MutedByUs    = @{}   # session instance was muted by us
+$LeftAlone    = @{}   # session instance was unmuted by hand later -> do not touch it again
+$Warned       = @{}   # log a warning only once per instance
 $lastErrorLog = [datetime]::MinValue
 $pollCount    = 0
 
-Write-Log ('Watchdog gestartet (PID {0}, Pruefung alle {1} s, Geraete-Filter ''{2}''). Stummschaltet jede Discord-Audiospur auf den Wave-Link-Geraeten - auch nachtraeglich entstehende.' -f $PID, $PollIntervalSeconds, $DeviceFilter)
+Write-Log ('Watchdog started (PID {0}, checking every {1} s, device filter ''{2}''). Muting every Discord audio session on the Wave Link devices - including sessions that appear later.' -f $PID, $PollIntervalSeconds, $DeviceFilter)
 
 while ($true) {
     $pollCount++
@@ -558,7 +563,7 @@ while ($true) {
     $sessions = @()
     try { $sessions = @(Get-DiscordSessions) } catch {
         if ((Get-Date) -gt $lastErrorLog.AddMinutes(5)) {
-            Write-Log ('Hinweis: Abfrage der Audio-Sitzungen fehlgeschlagen ({0}) - versuche es weiter.' -f $_.Exception.Message)
+            Write-Log ('Note: Failed to query audio sessions ({0}) - will keep trying.' -f $_.Exception.Message)
             $lastErrorLog = Get-Date
         }
         Start-Sleep -Seconds $PollIntervalSeconds
@@ -569,9 +574,8 @@ while ($true) {
         $key = if ($s.Instance) { $s.Instance } else { '{0}|{1}' -f $s.ProcessId, $s.Device }
 
         if ($s.Muted) {
-            # Bereits stumm: als "gewollt stumm" uebernehmen, damit eine
-            # spaetere Freischaltung (von Hand oder -Unmute) als manuelle
-            # Aenderung erkannt und respektiert wird.
+            # Already muted: adopt it as "intentionally muted" so that a later
+            # unmute (by hand or -Unmute) is detected and respected.
             if (-not $MutedByUs.ContainsKey($key) -and -not $LeftAlone.ContainsKey($key)) {
                 $MutedByUs[$key] = $true
             }
@@ -580,28 +584,28 @@ while ($true) {
         if ($LeftAlone.ContainsKey($key)) { continue }
 
         if ($MutedByUs.ContainsKey($key)) {
-            # Wir haben sie stummgeschaltet, jetzt ist sie wieder hoerbar:
-            # das war von Hand (Mixer oder -Unmute) -> respektieren.
+            # We muted it, now it is audible again: this was done by hand
+            # (mixer or -Unmute) -> respect it.
             $LeftAlone[$key] = $true
-            Write-Log ("{0} (PID {1}, Geraet '{2}') ist wieder hoerbar - vermutlich von Hand freigeschaltet. Lasse es zu, bis eine neue Audiospur erscheint." -f $s.ProcessName, $s.ProcessId, $s.Device)
+            Write-Log ("{0} (PID {1}, device '{2}') is audible again - probably unmuted manually. Leaving it alone until a new audio session appears." -f $s.ProcessName, $s.ProcessId, $s.Device)
             continue
         }
 
         try { $ok = [AudioSessionTools]::SetMute($DeviceFilter, $s.ProcessId, $true) } catch {
             if (-not $Warned.ContainsKey($key)) {
                 $Warned[$key] = $true
-                Write-Log ("WARNUNG: Stummschalten fehlgeschlagen fuer {0} (PID {1}, Geraet '{2}'): {3}" -f $s.ProcessName, $s.ProcessId, $s.Device, $_.Exception.Message)
+                Write-Log ("WARNING: Muting failed for {0} (PID {1}, device '{2}'): {3}" -f $s.ProcessName, $s.ProcessId, $s.Device, $_.Exception.Message)
             }
             continue
         }
 
         if ($ok) {
             $MutedByUs[$key] = $true
-            Write-Log ("{0} (PID {1}, Geraet '{2}') -> STUMM" -f $s.ProcessName, $s.ProcessId, $s.Device)
+            Write-Log ("{0} (PID {1}, device '{2}') -> MUTED" -f $s.ProcessName, $s.ProcessId, $s.Device)
         }
         elseif (-not $Warned.ContainsKey($key)) {
             $Warned[$key] = $true
-            Write-Log ("WARNUNG: Zustand konnte fuer {0} (PID {1}, Geraet '{2}') nicht gesetzt werden." -f $s.ProcessName, $s.ProcessId, $s.Device)
+            Write-Log ("WARNING: Could not set state for {0} (PID {1}, device '{2}')." -f $s.ProcessName, $s.ProcessId, $s.Device)
         }
     }
 

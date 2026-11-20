@@ -1,10 +1,102 @@
 # Discord WaveLink AutoMute
 
-**Deutsch** · [English](#english)
+Automatically mutes Discord's audio session on Elgato Wave Link devices on Windows — permanently in the background. Prevents doubled voice audio when screen sharing with sound.
 
-Mutet die Discord-Audiospur auf den Elgato Wave Link Geräten unter Windows automatisch – dauerhaft im Hintergrund. Verhindert den doppelten Stimmen-Ton beim Bildschirmteilen mit Audio.
+**English** · **Deutsch**
 
-## Das Problem
+## English
+
+### The problem
+
+If you use Elgato Wave Link and share your screen **with sound** in Discord, this is familiar:
+
+- Discord captures the audio of the Windows default output device while sharing.
+- On Wave Link setups that is often the local monitor mix – which also carries the Discord voices.
+- The other people in the call therefore hear the voices twice: once normally, once through the stream.
+
+The manual workaround is to mute the Discord track in the Windows volume mixer (or Wave Link mixer) – but that mute is lost on every reboot and has to be set again.
+
+### The solution
+
+A small watchdog (PowerShell + WASAPI/COM, no third-party software):
+
+- mutes all Discord audio sessions on devices named „Elgato Virtual Audio" automatically at every logon,
+- keeps running permanently in the background and also catches sessions that appear later (e.g. when apps with sound are opened while streaming),
+- runs completely invisible (scheduled task + VBS launcher, no window, no taskbar entry),
+- respects a manual unmute (Wave Link mixer or `-Unmute`) and does not switch back,
+- needs **no admin rights** and no drivers.
+
+After the next PC start everything is muted again – exactly as intended.
+
+### Installation
+
+1. Download the [release](https://github.com/Leonplayce/Discord-WaveLink-AutoMute/releases) (`Discord-WaveLink-Mute.zip`) and extract it.
+2. Double-click `Discord-WaveLink-Mute-Setup.bat`.
+3. Done. The installer checks whether Wave Link is installed, sets up autostart and applies the first mute.
+
+**Requirements:** Windows 10/11, Elgato Wave Link installed, Discord.
+
+> Windows SmartScreen may warn about unknown `.bat`/`.ps1` files ("More info" → "Run anyway"). The script is plain, fully visible PowerShell code in this repository.
+
+### Commands
+
+The installed engine lives at `%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1`.
+
+| Command | Effect |
+|---|---|
+| `... -Mute` | Mute Discord now (e.g. before sharing with sound) |
+| `... -Unmute` | Unmute Discord now (the watchdog respects that) |
+| `... -List` | Show devices + running audio sessions |
+| `... -Install` | Set up autostart (the installer does this automatically) |
+| `... -Remove` | Remove autostart and watchdog (uninstall) |
+
+Example:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1" -Unmute
+```
+
+### How it works
+
+- The engine enumerates all active render devices whose name contains „Elgato Virtual Audio" via the Windows Core Audio API (WASAPI).
+- For each device `IAudioSessionManager2` is activated and every session whose process is `Discord`, `DiscordCanary` or `DiscordPTB` is muted through `ISimpleAudioVolume.SetMute`.
+- The COM interfaces are embedded as C# interop directly in the PowerShell script (`Add-Type`) – no DLLs, no installation.
+- A background loop checks every 5 seconds; new sessions are detected and muted (watchdog mode).
+- Autostart uses a scheduled task in the user context (no admin). If registration fails, a shortcut in the Startup folder is created automatically.
+- A VBS launcher starts PowerShell windowless so nothing flashes at logon.
+
+### Project structure
+
+```
+Mute-Discord-WaveLink.ps1          Engine (source, usable standalone)
+Discord-WaveLink-Mute-Setup.bat    One-click installer (engine embedded)
+README.txt                         Short guide for the release ZIP
+build-installer.ps1                Rebuilds the .bat from the engine
+make-release.ps1                   Builds the distribution ZIP
+```
+
+### Development
+
+1. Edit the engine in `Mute-Discord-WaveLink.ps1`.
+2. Run `powershell -ExecutionPolicy Bypass -File .\build-installer.ps1` – re-embeds the engine into the `.bat` and verifies the result.
+3. Test: `powershell -ExecutionPolicy Bypass -File .\Mute-Discord-WaveLink.ps1 -List`
+
+### Troubleshooting
+
+- Log file: `%LOCALAPPDATA%\DiscordMuteAutomation\log.txt`
+- „No devices matching 'Elgato Virtual Audio' found" → Wave Link is not installed or the virtual devices are disabled.
+- No mute after logon → check the log for „Watchdog started"; re-run `-Install` if needed.
+- Installer exit codes: `3` = no Wave Link devices, `4` = autostart could not be configured.
+
+### License
+
+MIT – see [LICENSE](LICENSE). Unofficial project, not affiliated with Elgato or Discord. Use at your own risk.
+
+---
+
+## Deutsch
+
+### Das Problem
 
 Wer Elgato Wave Link nutzt und in Discord den Bildschirm **mit Ton** teilt, kennt das:
 
@@ -14,7 +106,7 @@ Wer Elgato Wave Link nutzt und in Discord den Bildschirm **mit Ton** teilt, kenn
 
 Manuell löst man das, indem man im Windows-Lautstärkemixer (bzw. Wave-Link-Mixer) die Discord-Spur stummschaltet – aber der Mute geht bei jedem Neustart verloren und muss neu gesetzt werden.
 
-## Die Lösung
+### Die Lösung
 
 Ein kleiner Watchdog (PowerShell + WASAPI/COM, ohne Zusatzsoftware):
 
@@ -26,7 +118,7 @@ Ein kleiner Watchdog (PowerShell + WASAPI/COM, ohne Zusatzsoftware):
 
 Nach dem nächsten PC-Start ist wieder alles stumm – genau wie gewünscht.
 
-## Installation
+### Installation
 
 1. [Release](https://github.com/Leonplayce/Discord-WaveLink-AutoMute/releases) herunterladen (`Discord-WaveLink-Mute.zip`) und entpacken.
 2. Doppelklick auf `Discord-WaveLink-Mute-Setup.bat`.
@@ -36,7 +128,7 @@ Nach dem nächsten PC-Start ist wieder alles stumm – genau wie gewünscht.
 
 > Windows SmartScreen kann bei unbekannten `.bat`/`.ps1`-Dateien warnen („Weitere Informationen" → „Trotzdem ausführen"). Das Skript ist reiner, hier vollständig einsehbarer PowerShell-Code.
 
-## Befehle
+### Befehle
 
 Die installierte Engine liegt unter `%LOCALAPPDATA%\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1`.
 
@@ -54,7 +146,7 @@ Beispiel:
 powershell -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\DiscordMuteAutomation\Mute-Discord-WaveLink.ps1" -Unmute
 ```
 
-## Wie es funktioniert
+### Wie es funktioniert
 
 - Die Engine zählt über das Windows Core Audio API (WASAPI) alle aktiven Render-Geräte auf, deren Name „Elgato Virtual Audio" enthält.
 - Pro Gerät wird `IAudioSessionManager2` aktiviert und jede Sitzung mit Prozessname `Discord`, `DiscordCanary` oder `DiscordPTB` über `ISimpleAudioVolume.SetMute` stummgeschaltet.
@@ -63,48 +155,29 @@ powershell -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\DiscordMuteAutomatio
 - Der Autostart läuft über eine geplante Aufgabe im Benutzerkontext (ohne Admin). Scheitert die Registrierung, wird automatisch eine Verknüpfung im Autostart-Ordner angelegt.
 - Ein VBS-Starter startet PowerShell fensterlos, damit beim Login nichts aufblitzt.
 
-## Projektstruktur
+### Projektstruktur
 
 ```
 Mute-Discord-WaveLink.ps1          Engine (Quelle, standalone nutzbar)
 Discord-WaveLink-Mute-Setup.bat    Ein-Klick-Installer (Engine eingebettet)
-LIESMICH.txt                       Kurzanleitung für die Weitergabe
+README.txt                         Kurzanleitung für das Release-ZIP
 build-installer.ps1                Baut die .bat aus der Engine neu
 make-release.ps1                   Erstellt das Weitergabe-ZIP
 ```
 
-## Entwicklung
+### Entwicklung
 
 1. Engine in `Mute-Discord-WaveLink.ps1` anpassen.
 2. `powershell -ExecutionPolicy Bypass -File .\build-installer.ps1` ausführen – bettet die Engine neu in die `.bat` ein und prüft das Ergebnis.
 3. Testen: `powershell -ExecutionPolicy Bypass -File .\Mute-Discord-WaveLink.ps1 -List`
 
-## Fehlersuche
+### Fehlersuche
 
 - Protokoll: `%LOCALAPPDATA%\DiscordMuteAutomation\log.txt`
-- „KEINE 'Elgato Virtual Audio'-Geräte gefunden" → Wave Link ist nicht installiert oder die virtuellen Geräte sind deaktiviert.
-- Kein Mute nach dem Start → im Protokoll prüfen, ob „Watchdog gestartet" steht; ggf. `-Install` erneut ausführen.
+- „No devices matching 'Elgato Virtual Audio' found" → Wave Link ist nicht installiert oder die virtuellen Geräte sind deaktiviert.
+- Kein Mute nach dem Start → im Protokoll prüfen, ob „Watchdog started" steht; ggf. `-Install` erneut ausführen.
 - Exit-Codes des Installers: `3` = keine Wave-Link-Geräte, `4` = Autostart konnte nicht eingerichtet werden.
 
-## Lizenz
+### Lizenz
 
 MIT – siehe [LICENSE](LICENSE). Inoffizielles Projekt, nicht mit Elgato oder Discord verbunden. Nutzung auf eigene Gefahr.
-
----
-
-## English
-
-**Discord WaveLink AutoMute** automatically mutes Discord's audio session on Elgato Wave Link devices on Windows. This prevents doubled voice audio when screen sharing **with sound** in Discord: Discord captures the default output device, which on Wave Link setups is often the local monitor mix that already contains the call voices.
-
-- Permanent background watchdog (checks every 5 s) – also mutes sessions that appear later, e.g. when apps with audio are opened while streaming.
-- Completely invisible autostart (scheduled task + VBS launcher, no window, no taskbar entry).
-- Respects manual unmute (Wave Link mixer or `-Unmute`) and does not switch back.
-- No admin rights, no drivers, no third-party tools – pure PowerShell + WASAPI COM interop.
-
-**Install:** download the release ZIP, extract it, double-click `Discord-WaveLink-Mute-Setup.bat`.
-
-**Commands:** `-Mute`, `-Unmute`, `-List`, `-Install`, `-Remove`
-
-**Log:** `%LOCALAPPDATA%\DiscordMuteAutomation\log.txt`
-
-**License:** MIT. Unofficial project, not affiliated with Elgato or Discord. Use at your own risk.
