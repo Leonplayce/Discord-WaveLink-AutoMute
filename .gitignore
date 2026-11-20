@@ -1,0 +1,6 @@
+# Build-Ergebnisse
+release/
+*.zip
+
+# Logs
+*.log
